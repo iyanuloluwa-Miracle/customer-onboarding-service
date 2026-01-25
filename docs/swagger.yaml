@@ -1,0 +1,244 @@
+basePath: /
+definitions:
+  models.APIResponse:
+    description: Standard API response wrapper
+    properties:
+      data: {}
+      error:
+        example: ""
+        type: string
+      message:
+        example: Operation completed successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.Bank:
+    description: Bank information from external API
+    properties:
+      code:
+        example: "044"
+        type: string
+      name:
+        example: Access Bank
+        type: string
+    type: object
+  models.Customer:
+    description: Customer entity with personal information and verification status
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      isPhoneVerified:
+        type: boolean
+      lga:
+        type: string
+      phone:
+        type: string
+      state:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  models.OnboardRequest:
+    description: Request payload for customer onboarding
+    properties:
+      email:
+        example: customer@example.com
+        type: string
+      lga:
+        example: Ikeja
+        type: string
+      password:
+        example: securepassword123
+        minLength: 6
+        type: string
+      phone:
+        example: "+2348012345678"
+        type: string
+      state:
+        example: Lagos
+        type: string
+    required:
+    - email
+    - lga
+    - password
+    - phone
+    - state
+    type: object
+  models.ResendOTPRequest:
+    description: Request payload for resending OTP
+    properties:
+      phone:
+        example: "+2348012345678"
+        type: string
+    required:
+    - phone
+    type: object
+  models.VerifyOTPRequest:
+    description: Request payload for OTP verification
+    properties:
+      otp:
+        example: "123456"
+        type: string
+      phone:
+        example: "+2348012345678"
+        type: string
+    required:
+    - otp
+    - phone
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: A microservice API for customer onboarding with phone verification
+    via OTP.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Customer Onboarding API
+  version: "1.0"
+paths:
+  /api/v1/banks:
+    get:
+      description: Retrieve list of banks from external API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of banks
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Bank'
+                  type: array
+              type: object
+        "500":
+          description: Failed to fetch banks
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Get all banks
+      tags:
+      - Banks
+  /api/v1/customers:
+    get:
+      description: Retrieve all onboarded customers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of customers
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Customer'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Get all customers
+      tags:
+      - Customers
+  /api/v1/customers/onboard:
+    post:
+      consumes:
+      - application/json
+      description: Register a new customer with phone, email, password, state and
+        LGA. An OTP will be sent for phone verification.
+      parameters:
+      - description: Onboard Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.OnboardRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: OTP sent for verification
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid request or business rule violation
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Onboard a new customer
+      tags:
+      - Customers
+  /api/v1/customers/resend-otp:
+    post:
+      consumes:
+      - application/json
+      description: Resend OTP to the registered phone number
+      parameters:
+      - description: Resend OTP Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.ResendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP resent successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Failed to resend OTP
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Resend OTP
+      tags:
+      - Customers
+  /api/v1/customers/verify-otp:
+    post:
+      consumes:
+      - application/json
+      description: Complete onboarding by verifying the phone number with the OTP
+        sent
+      parameters:
+      - description: Verify OTP Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Phone verified successfully
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Invalid or expired OTP
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Verify phone number with OTP
+      tags:
+      - Customers
+schemes:
+- http
+- https
+swagger: "2.0"
